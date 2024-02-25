@@ -1,7 +1,10 @@
 package com.lhh.usercenter.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.lhh.usercenter.common.Result;
+import com.lhh.usercenter.constant.MessageConstant;
 import com.lhh.usercenter.constant.UserConstant;
+import com.lhh.usercenter.exception.BaseException;
 import com.lhh.usercenter.model.domain.User;
 import com.lhh.usercenter.model.domain.request.UserLoginDTO;
 import com.lhh.usercenter.model.domain.request.UserRegisterDTO;
@@ -38,9 +41,9 @@ public class UserController {
      * @return
      */
     @PostMapping("/register")
-    public Long userRegister(@RequestBody UserRegisterDTO userRegisterDTO){
+    public Result<Long> userRegister(@RequestBody UserRegisterDTO userRegisterDTO){
         if (userRegisterDTO==null){
-            return null;
+            throw new BaseException(MessageConstant.PARA_ERROR);
         }
 
         String userAccount=userRegisterDTO.getUserAccount();
@@ -48,10 +51,11 @@ public class UserController {
         String checkPassword=userRegisterDTO.getCheckPassword();
 
         if (StringUtils.isAnyBlank(userAccount,userPassword,checkPassword)){
-            return null;
+            throw new BaseException(MessageConstant.PARA_ERROR);
         }
 
-        return userService.userRegister(userAccount, userPassword,checkPassword );
+        long l = userService.userRegister(userAccount, userPassword, checkPassword);
+        return Result.success(l);
     }
 
 
@@ -62,34 +66,36 @@ public class UserController {
      * @return
      */
     @PostMapping("/login")
-    public User userLogin(@RequestBody UserLoginDTO userLoginDTO, HttpServletRequest httpServletRequest){
+    public Result<User> userLogin(@RequestBody UserLoginDTO userLoginDTO, HttpServletRequest httpServletRequest){
         if (userLoginDTO==null){
-            return null;
+            throw new BaseException(MessageConstant.PARA_ERROR);
         }
 
         String userAccount=userLoginDTO.getUserAccount();
         String userPassword=userLoginDTO.getUserPassword();
 
         if (StringUtils.isAnyBlank(userAccount,userPassword)){
-            return null;
+            throw new BaseException(MessageConstant.PARA_ERROR);
         }
 
-        return userService.userLogin(userAccount,userPassword,httpServletRequest);
+        User user = userService.userLogin(userAccount, userPassword, httpServletRequest);
+        return Result.success(user);
     }
 
 
     @GetMapping("/current")
-    public User getCurrentUser(HttpServletRequest request){
+    public Result<User> getCurrentUser(HttpServletRequest request){
         Object o = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
         User user=(User) o;
         if (user==null){
-            return null;
+            throw new BaseException(MessageConstant.NO_LOGIN);
         }
         //TODO 校验用户是否合法
         long userId=user.getId();
         user=userService.getById(userId);
         log.info("请求当前用户，{}",user);
-        return userService.safeUser(user);
+        User safedUser = userService.safeUser(user);
+        return Result.success(safedUser);
     }
 
 
@@ -100,10 +106,14 @@ public class UserController {
      * @return
      */
     @GetMapping("/search")
-    public List<User> searchUsers(String username,HttpServletRequest request ){
+    public Result<List<User>> searchUsers(String username,HttpServletRequest request ){
+
+        log.info("请求查询用户列表");
+
         // 鉴定权限
         if(!isAdmin(request)){
-            return new ArrayList<>();
+            log.info("该用户无权查询");
+            throw new BaseException(MessageConstant.NO_AUTH);
         }
 
         QueryWrapper queryWrapper=new QueryWrapper();
@@ -118,7 +128,7 @@ public class UserController {
                 .map(user -> userService.safeUser(user))
                 .toList();
 
-        return safeList;
+        return Result.success(safeList);
     }
 
 
@@ -129,14 +139,16 @@ public class UserController {
      * @return
      */
     @DeleteMapping("/{id}")
-    public boolean deleteUser(@PathVariable long id,HttpServletRequest request){
+    public Result<Boolean> deleteUser(@PathVariable long id,HttpServletRequest request){
         //鉴定权限
         if (!isAdmin(request)){
-            return false;
+            log.info("该用户无权删除");
+            throw new BaseException(MessageConstant.NO_AUTH);
         }
 
-        if (id<=0) return false;
-        return userService.removeById(id);
+        if (id<=0) return Result.success(false);
+        boolean b = userService.removeById(id);
+        return Result.success(b);
     }
 
 
@@ -148,6 +160,15 @@ public class UserController {
     }
 
 
+    /**
+     * 用户退出登录
+     * @param request
+     * @return
+     */
+    @PostMapping("/logout")
+    public int userLogout(HttpServletRequest request){
+        return userService.userLogout(request);
+    }
 
 
 }

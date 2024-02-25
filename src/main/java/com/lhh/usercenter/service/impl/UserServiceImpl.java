@@ -2,6 +2,9 @@ package com.lhh.usercenter.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lhh.usercenter.common.Result;
+import com.lhh.usercenter.constant.MessageConstant;
+import com.lhh.usercenter.exception.BaseException;
 import com.lhh.usercenter.model.domain.User;
 import com.lhh.usercenter.service.UserService;
 import com.lhh.usercenter.mapper.UserMapper;
@@ -102,13 +105,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         //1. 校验
         if(StringUtils.isAnyBlank(userAccount,userPassword)){
-            return null;
+            throw new BaseException(MessageConstant.NO_MATCH);
         }
         if (userAccount.length()<4){
-            return null;
+            throw new BaseException(MessageConstant.NO_MATCH);
         }
         if (userPassword.length()<8){
-            return null;
+            throw new BaseException(MessageConstant.NO_MATCH);
         }
 
         //校验特殊字符
@@ -125,7 +128,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         if (user==null){
             log.info("用户账号或密码输入错误");
-            return null;
+            throw new BaseException(MessageConstant.NO_MATCH);
         }
 
 
@@ -164,9 +167,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return safeUserInformation;
     }
 
+
+
     @Override
-    public int userLogout() {
-        return 0;
+    public int userLogout(HttpServletRequest request) {
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        return 1;
     }
 }
 
