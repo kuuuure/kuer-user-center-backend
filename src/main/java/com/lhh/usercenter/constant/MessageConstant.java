@@ -15,5 +15,13 @@ public interface MessageConstant {
 
     String ALREADY_EXISTS="已经存在";
 
+    String PASSWORD_NOT_SAME="两次密码输入不一致";
+
     String NO_MATCH="账号或者密码填写错误";
+
+    String ACCOUNT_TOO_SHORT="账号过短";
+
+    String PASSWORD_TOO_SHORT="密码过短";
+
+    String LOGOUT_SUCCESS="退出成功";
 }

@@ -59,6 +59,7 @@ public class Result<T> implements Serializable {
      */
     public static <T> Result<T> error(String msg) {
         Result result = new Result();
+        result.data=null;
         result.msg = msg;
         result.success=false;
         result.errorCode = CodeConstant.ERROR_MESSAGE;

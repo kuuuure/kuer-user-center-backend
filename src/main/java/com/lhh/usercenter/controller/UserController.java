@@ -166,8 +166,9 @@ public class UserController {
      * @return
      */
     @PostMapping("/logout")
-    public int userLogout(HttpServletRequest request){
-        return userService.userLogout(request);
+    public Result userLogout(HttpServletRequest request){
+        userService.userLogout(request);
+        return Result.success();
     }
 
 

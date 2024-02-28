@@ -46,13 +46,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     {
         //1. 校验
         if(StringUtils.isAnyBlank(userAccount,userPassword,checkPassword)){
-            return -1;
+            throw new BaseException(MessageConstant.PARA_ERROR);
         }
         if (userAccount.length()<4){
-            return -1;
+            throw new BaseException(MessageConstant.ACCOUNT_TOO_SHORT);
         }
         if (userPassword.length()<8||checkPassword.length()<8){
-            return -1;
+            throw new BaseException(MessageConstant.PASSWORD_TOO_SHORT);
         }
 
 
@@ -62,7 +62,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         //密码和校验密码相等
         if (!userPassword.equals(checkPassword)){
-            return -1;
+            throw new BaseException(MessageConstant.PASSWORD_NOT_SAME);
         }
 
         //账户不能重复
@@ -71,7 +71,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         queryWrapper.eq("userAccount",userAccount);
         long count = this.count(queryWrapper);
         if (count>0){
-            return -1;
+            throw new BaseException(MessageConstant.ALREADY_EXISTS);
         }
 
 
@@ -85,7 +85,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserPassword(newPassword);
         boolean result = this.save(user);
         if (!result){
-            return -1;
+            throw new BaseException(MessageConstant.UNKNOWN_ERROR);
         }
         return user.getId();
     }
@@ -170,9 +170,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
 
     @Override
-    public int userLogout(HttpServletRequest request) {
+    public void userLogout(HttpServletRequest request) {
         request.getSession().removeAttribute(USER_LOGIN_STATE);
-        return 1;
+        return;
     }
 }
 
